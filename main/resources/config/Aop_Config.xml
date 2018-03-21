@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:aop="http://www.springframework.org/schema/aop"
+       xsi:schemaLocation=
+               " http://www.springframework.org/schema/aop
+               http://www.springframework.org/schema/aop/spring-aop.xsd
+               http://www.springframework.org/schema/beans
+               http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+    <bean id="audience" class="concert.Audience"/>
+    <bean id="audience2" class="concert.Audience2"/>
+    <bean id="dancing" class="concert.Dancing"/>
+
+    <bean id="trackCounter" class="soundSystem.TrackCounter"/>
+    <bean id="cd" class="soundSystem.BlankDisc">
+        <property name="title" value="Sgt. Pepper's Lonely Hearts Club Band"/>
+        <property name="artist" value="The Beatles"/>
+        <property name="tracks">
+            <list>
+                <value>Sgt. Pepper's Lonely Hearts Club Band</value>
+                <value>With a Little Help from My Friends</value>
+                <value>Lucy in the Sky with Diamonds</value>
+                <value>Getting Better</value>
+                <value>Fixing a Hole</value>
+            </list>
+        </property>
+    </bean>
+
+
+    <aop:config>
+        <!--定义切面-->
+        <aop:aspect ref="audience">
+            <!--定义切点，注意切点定义在切面内-->
+            <aop:pointcut id="performance"
+                          expression="execution(* concert.Performance.perform(..))" />
+            <aop:before pointcut-ref="performance"
+                        method="silenceCellPhones" />
+            <aop:before pointcut-ref="performance"
+                        method="takeSeats" />
+            <aop:after-returning pointcut-ref="performance"
+                                 method="applause" />
+            <aop:after-throwing pointcut-ref="performance"
+                                method="demandRefund" />
+        </aop:aspect>
+
+
+        <aop:aspect ref="audience2">
+            <aop:pointcut id="exit" expression="execution(* concert.Performance.exit(..))" />
+            <!--声明环绕通知-->
+            <aop:around pointcut-ref="exit" method="quit"/>
+        </aop:aspect>
+
+        <aop:aspect ref="trackCounter">
+            <!--为通知传递参数-->
+            <aop:pointcut id="trackPlayed" expression=
+                    "execution(* soundSystem.CompactDisc.playTrack(int)) and args(trackNumber)" />
+
+            <aop:before pointcut-ref="trackPlayed" method="countTrack" />
+        </aop:aspect>
+
+        <aop:aspect>
+            <!--通过切面引入新功能（方法）-->
+            <aop:declare-parents types-matching="concert.Performance+"
+                                 implement-interface="concert.Encoreable"
+                                 default-impl="concert.DefaultEncoreable" />
+        </aop:aspect>
+
+    </aop:config>
+
+</beans>
